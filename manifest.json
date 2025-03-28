@@ -1,0 +1,11 @@
+{
+    "manifest_version": 3,
+    "name": "Web RAG Chat",
+    "version": "1.0",
+    "description": "Ask questions about the current webpage using AI",
+    "permissions": ["activeTab", "tabs"],
+    "action": {
+        "default_popup": "popup.html",
+        "default_icon": "icon.png"
+    }
+}

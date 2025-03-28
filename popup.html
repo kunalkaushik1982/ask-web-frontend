@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Web Page Q&A</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            width: 400px;
+            padding: 10px;
+        }
+        #question {
+            width: calc(100% - 20px);
+            padding: 8px;
+            margin-bottom: 10px;
+        }
+        #askButton {
+            width: 100%;
+            padding: 8px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        #askButton:disabled {
+            background-color: #a0a0a0;
+            cursor: not-allowed;
+        }
+        #responses {
+            margin-top: 10px;
+            display: flex;
+            flex-direction: column; /* Ensure normal order */
+            gap: 10px;
+            max-height: 300px;
+            overflow-y: auto;
+            border-top: 1px solid #ddd;
+            padding-top: 10px;
+        }
+        .response {
+            padding: 8px;
+            border-radius: 5px;
+            background-color: #f1f1f1;
+        }
+    </style>
+</head>
+<body>
+    <h3>Ask About This Page</h3>
+    <input type="text" id="question" placeholder="Type your question..." />
+    <button id="askButton">Ask</button>
+    <div id="responses"></div>
+
+    <script src="popup.js"></script>
+</body>
+</html>
