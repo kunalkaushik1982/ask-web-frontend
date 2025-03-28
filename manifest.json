@@ -1,11 +1,23 @@
 {
     "manifest_version": 3,
-    "name": "Web RAG Chat",
+    "name": "WebPage Q&A Assistant",
     "version": "1.0",
-    "description": "Ask questions about the current webpage using AI",
-    "permissions": ["activeTab", "tabs"],
+    "description": "Ask questions about the current web page using OpenAI.",
+    "permissions": ["activeTab", "storage", "scripting"],
+    "host_permissions": ["<all_urls>"],
+    "background": {
+      "service_worker": "background.js"
+    },
     "action": {
-        "default_popup": "popup.html",
-        "default_icon": "icon.png"
-    }
-}
+      "default_popup": "popup.html",
+      "default_icon": "icon.png"
+    },
+    "content_scripts": [
+      {
+        "matches": ["<all_urls>"],
+        "js": ["content.js"],
+        "run_at": "document_end"
+      }
+    ]
+  }
+  
