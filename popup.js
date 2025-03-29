@@ -12,6 +12,12 @@ document.addEventListener("DOMContentLoaded", async () => {
     const prevQuestionButton = document.getElementById("prevQuestion");
     const nextQuestionButton = document.getElementById("nextQuestion");
 
+    // Tab elements
+    const qaTab = document.getElementById("qaSection");
+    const settingsTab = document.getElementById("settingsSection");
+    const qaTabBtn = document.getElementById("qaTabBtn");
+    const settingsTabBtn = document.getElementById("settingsTabBtn");
+
     let apiKey = "";
     let questionLimit = 5;
     let tabUrl = "";
@@ -36,12 +42,28 @@ document.addEventListener("DOMContentLoaded", async () => {
         chrome.storage.local.set({ theme: isDarkMode ? "dark" : "light" });
     });
 
-    // Open Settings Page
+    // ✅ Switch to Settings Tab when ⚙️ is clicked
     settingsIcon.addEventListener("click", () => {
-        alert("Settings Page Coming Soon!");
-        //chrome.tabs.create({ url: "settings.html" });
-        // You can redirect to another settings page like `chrome.runtime.openOptionsPage()`
+        switchToSettings();
     });
+
+    // ✅ Handle Tab Switching
+    qaTabBtn.addEventListener("click", switchToQA);
+    settingsTabBtn.addEventListener("click", switchToSettings);
+
+    function switchToQA() {
+        qaTab.classList.remove("hidden");
+        settingsTab.classList.add("hidden");
+        qaTabBtn.classList.add("active");
+        settingsTabBtn.classList.remove("active");
+    }
+
+    function switchToSettings() {
+        settingsTab.classList.remove("hidden");
+        qaTab.classList.add("hidden");
+        settingsTabBtn.classList.add("active");
+        qaTabBtn.classList.remove("active");
+    }
 
     // ✅ Get the current tab URL
     chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
@@ -146,5 +168,26 @@ document.addEventListener("DOMContentLoaded", async () => {
             currentIndex++;
             renderQuestion();
         }
+    });
+
+    // ✅ Save API Key
+    saveApiKeyButton.addEventListener("click", () => {
+        chrome.storage.local.set({ apiKey: apiKeyInput.value }, () => {
+            alert("API Key saved!");
+            apiKeyInput.value = "******";
+        });
+    });
+
+    // ✅ Change API Key (Clear input)
+    changeApiKeyButton.addEventListener("click", () => {
+        apiKeyInput.value = "";
+        apiKeyInput.focus();
+    });
+
+    // ✅ Save Question Limit
+    saveLimitButton.addEventListener("click", () => {
+        chrome.storage.local.set({ questionLimit: parseInt(questionLimitInput.value, 10) || 5 }, () => {
+            alert("Question limit saved!");
+        });
     });
 });

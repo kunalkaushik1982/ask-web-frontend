@@ -6,6 +6,33 @@ body {
     overflow: hidden; /* Prevent scrolling of the whole popup */
     transition: background-color 0.3s, color 0.3s;
 }
+
+/* Tab styles */
+.tabs {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 10px;
+}
+
+.tab-button {
+    flex: 1;
+    padding: 10px;
+    border: none;
+    cursor: pointer;
+    background: #ddd;
+    font-weight: bold;
+}
+
+.tab-button.active {
+    background: #007bff;
+    color: white;
+}
+
+/* Hide settings initially */
+.hidden {
+    display: none;
+}
+
 .container {
     display: flex;
     flex-direction: column;
@@ -80,6 +107,7 @@ button:disabled {
     padding-bottom: 5px;
     position: relative;
 }
+/* Icons container */
 .theme-toggle,.settings-icon {
     cursor: pointer;
     font-size: 18px;
