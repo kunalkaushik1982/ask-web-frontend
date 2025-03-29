@@ -9,6 +9,8 @@
             font-family: Arial, sans-serif;
             padding: 10px;
             width: 320px;
+            height: 450px; /* Fix popup height to prevent full-page scrolling */
+            overflow: hidden; /* Prevent scrolling of the whole popup */
             transition: background-color 0.3s, color 0.3s;
         }
         .container {
@@ -39,6 +41,10 @@
         button:hover {
             background: #0056b3;
         }
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
         .progress {
             display: none;
             text-align: center;
@@ -49,17 +55,27 @@
             flex-direction: column;
             gap: 5px;
         }
+        #responseContainer {
+            max-height: 60px; /* Ensures scrollability */
+            overflow-y: auto; /* Enables scrolling only inside this */
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            background: #f9f9f9;
+        }
+        .dark-mode #responseContainer {
+            background: #333;
+            color: #fff;
+        }
+        .pagination {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 10px;
+        }
         .question-item {
             padding: 10px;
             border-radius: 5px;
             background: #f1f1f1;
-            opacity: 0;
-            transform: translateY(10px);
-            animation: fadeIn 0.5s forwards;
-        }
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
         }
         .dark-mode .question-item {
             background: #333;
@@ -103,9 +119,16 @@
         <input type="number" id="questionLimit" min="1" value="5" />
         <button id="saveLimit">Save Limit</button>
     </div>
+
     <div class="progress" id="loading">Processing...</div>
 
-    <div class="question-container" id="responseContainer"></div>
+    <div class="question-container">
+        <div id="responseContainer"></div>
+        <div class="pagination">
+            <button id="prevQuestion" disabled>Previous</button>
+            <button id="nextQuestion" disabled>Next</button>
+        </div>
+    </div>
 
     <script src="popup.js"></script>
 </body>
