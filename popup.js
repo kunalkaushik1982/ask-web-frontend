@@ -6,12 +6,29 @@ document.addEventListener("DOMContentLoaded", function () {
     const askQuestionBtn = document.getElementById("askQuestion");
     const responseContainer = document.getElementById("responseContainer");
     const loadingIndicator = document.getElementById("loading");
+    const toggleThemeBtn = document.getElementById("toggleTheme");
 
     // Load API Key if saved
     const storedApiKey = localStorage.getItem("openai_api_key");
     if (storedApiKey) {
         apiKeyInput.value = storedApiKey;
     }
+
+    // Load and apply theme
+    function applyTheme() {
+        const isDarkMode = localStorage.getItem("dark_mode") === "enabled";
+        document.body.classList.toggle("dark-mode", isDarkMode);
+        toggleThemeBtn.innerText = isDarkMode ? "☀️ Light Mode" : "🌙 Dark Mode";
+    }
+
+    applyTheme(); // Apply saved theme
+
+    // Toggle Theme
+    toggleThemeBtn.addEventListener("click", function () {
+        const isDarkMode = document.body.classList.toggle("dark-mode");
+        localStorage.setItem("dark_mode", isDarkMode ? "enabled" : "disabled");
+        applyTheme();
+    });
 
     // Save API Key
     saveApiKeyBtn.addEventListener("click", function () {
@@ -86,12 +103,9 @@ document.addEventListener("DOMContentLoaded", function () {
     function displayResponse(question, answer) {
         const qaBox = document.createElement("div");
         qaBox.className = "question-item";
-        qaBox.innerHTML = `<strong>Q:</strong> ${question}<br><strong>A:</strong> ${answer}`;
+        qaBox.innerHTML = `<strong>Q:</strong> ${question}<br><p class="answer"><strong>A:</strong> ${answer}</p>`;
 
-        // Add the latest question at the top of the response history
         responseContainer.prepend(qaBox);
-
-        // Clear the input field after asking a question
         questionInput.value = "";
     }
 });

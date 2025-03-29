@@ -5,14 +5,17 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>WebPage Q&A</title>
     <style>
+        /* Default Light Theme */
         body {
             font-family: 'Arial', sans-serif;
             padding: 15px;
             width: 350px;
             background-color: #f4f4f4;
             color: #333;
+            transition: background 0.3s, color 0.3s;
+            position: relative;
         }
-        
+
         h3 {
             text-align: center;
             color: #007BFF;
@@ -25,10 +28,6 @@
             border-radius: 5px;
             border: 1px solid #ccc;
             font-size: 14px;
-        }
-
-        input {
-            background: #fff;
         }
 
         button {
@@ -86,9 +85,66 @@
         .api-container button {
             flex: 1;
         }
+
+        /* Dark Theme */
+        .dark-mode {
+            background-color: #222;
+            color: #ddd;
+        }
+
+        .dark-mode h3 {
+            color: #1E90FF;
+        }
+
+        .dark-mode input {
+            background: #333;
+            color: #ddd;
+            border: 1px solid #555;
+        }
+
+        .dark-mode button {
+            background: #1E90FF;
+            color: white;
+        }
+
+        .dark-mode button:hover {
+            background: #1565C0;
+        }
+
+        .dark-mode .question-item {
+            background: #333;
+            color: #ddd;
+        }
+
+        .dark-mode .question-item strong {
+            color: #1E90FF;
+        }
+
+        /* Theme Toggle Button (Top-Left) */
+        .theme-switch {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+        }
+
+        .theme-switch button {
+            background: #28a745;
+            padding: 5px 10px;
+            font-size: 12px;
+            border-radius: 15px;
+        }
+
+        .theme-switch button:hover {
+            background: #218838;
+        }
+
     </style>
 </head>
 <body>
+    <div class="theme-switch">
+        <button id="toggleTheme">🌙 Dark Mode</button>
+    </div>
+
     <h3>WebPage Q&A</h3>
 
     <div class="api-container">
