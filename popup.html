@@ -5,157 +5,70 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>WebPage Q&A</title>
     <style>
-        /* Default Light Theme */
         body {
-            font-family: 'Arial', sans-serif;
-            padding: 15px;
-            width: 350px;
-            background-color: #f4f4f4;
-            color: #333;
-            transition: background 0.3s, color 0.3s;
-            position: relative;
+            font-family: Arial, sans-serif;
+            padding: 10px;
+            width: 320px;
+            transition: background-color 0.3s, color 0.3s;
         }
-
-        h3 {
-            text-align: center;
-            color: #007BFF;
+        .dark-mode {
+            background-color: #121212;
+            color: #ffffff;
         }
-
         input, button {
             width: 100%;
-            padding: 10px;
-            margin-top: 8px;
+            margin-top: 5px;
+            padding: 8px;
             border-radius: 5px;
-            border: 1px solid #ccc;
-            font-size: 14px;
+            border: 1px solid #ddd;
         }
-
-        button {
-            background: #007BFF;
-            color: white;
-            font-weight: bold;
-            cursor: pointer;
-            border: none;
-            transition: background 0.3s ease;
-        }
-
-        button:hover {
-            background: #0056b3;
-        }
-
         .progress {
             display: none;
             text-align: center;
-            font-weight: bold;
-            color: #FF5733;
             margin-top: 10px;
         }
-
         .question-container {
-            margin-top: 10px;
-            max-height: 300px;
-            overflow-y: auto;
-            border-top: 2px solid #007BFF;
-            padding-top: 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
         }
-
         .question-item {
-            background: #fff;
             padding: 10px;
             border-radius: 5px;
-            margin-bottom: 10px;
-            box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.1);
+            background: #f1f1f1;
         }
-
-        .question-item strong {
-            color: #007BFF;
-        }
-
-        .answer {
-            color: #555;
-            margin-top: 5px;
-        }
-
-        .api-container {
-            display: flex;
-            gap: 5px;
-            margin-bottom: 10px;
-        }
-
-        .api-container button {
-            flex: 1;
-        }
-
-        /* Dark Theme */
-        .dark-mode {
-            background-color: #222;
-            color: #ddd;
-        }
-
-        .dark-mode h3 {
-            color: #1E90FF;
-        }
-
-        .dark-mode input {
-            background: #333;
-            color: #ddd;
-            border: 1px solid #555;
-        }
-
-        .dark-mode button {
-            background: #1E90FF;
-            color: white;
-        }
-
-        .dark-mode button:hover {
-            background: #1565C0;
-        }
-
         .dark-mode .question-item {
             background: #333;
-            color: #ddd;
         }
-
-        .dark-mode .question-item strong {
-            color: #1E90FF;
+        .top-controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
-
-        /* Theme Toggle Button (Top-Left) */
-        .theme-switch {
-            position: absolute;
-            top: 5px;
-            right: 5px;
+        .theme-toggle {
+            cursor: pointer;
+            font-size: 18px;
         }
-
-        .theme-switch button {
-            background: #28a745;
-            padding: 5px 10px;
-            font-size: 12px;
-            border-radius: 15px;
-        }
-
-        .theme-switch button:hover {
-            background: #218838;
-        }
-
     </style>
 </head>
 <body>
-    <div class="theme-switch">
-        <button id="toggleTheme">🌙 Dark Mode</button>
+    <div class="top-controls">
+        <span class="theme-toggle" id="toggleTheme">🌙</span>
+        <h3>Ask Questions</h3>
     </div>
 
-    <h3>WebPage Q&A</h3>
-
-    <div class="api-container">
-        <input type="password" id="apiKey" placeholder="Enter OpenAI API Key" />
-        <button id="saveApiKey">Save</button>
-        <button id="changeApiKey">Change</button>
-    </div>
+    <label for="apiKey">OpenAI API Key:</label>
+    <input type="password" id="apiKey" placeholder="Enter API Key" />
+    <button id="saveApiKey">Save API Key</button>
+    <button id="changeApiKey">Change API Key</button>
 
     <label for="question">Your Question:</label>
-    <input type="text" id="question" placeholder="Type your question..." />
+    <input type="text" id="question" placeholder="Type a question..." />
     <button id="askQuestion">Ask</button>
+
+    <label for="questionLimit">Max Questions Per Page:</label>
+    <input type="number" id="questionLimit" min="1" value="5" />
+    <button id="saveLimit">Save Limit</button>
 
     <div class="progress" id="loading">Processing...</div>
 

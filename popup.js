@@ -1,111 +1,134 @@
-document.addEventListener("DOMContentLoaded", function () {
-    const apiKeyInput = document.getElementById("apiKey");
-    const saveApiKeyBtn = document.getElementById("saveApiKey");
-    const changeApiKeyBtn = document.getElementById("changeApiKey");
-    const questionInput = document.getElementById("question");
-    const askQuestionBtn = document.getElementById("askQuestion");
+document.addEventListener("DOMContentLoaded", async () => {
+    const askButton = document.getElementById("askQuestion");
     const responseContainer = document.getElementById("responseContainer");
     const loadingIndicator = document.getElementById("loading");
-    const toggleThemeBtn = document.getElementById("toggleTheme");
+    const apiKeyInput = document.getElementById("apiKey");
+    const saveApiKeyButton = document.getElementById("saveApiKey");
+    const changeApiKeyButton = document.getElementById("changeApiKey");
+    const questionLimitInput = document.getElementById("questionLimit");
+    const saveLimitButton = document.getElementById("saveLimit");
+    const themeToggle = document.getElementById("toggleTheme");
 
-    // Load API Key if saved
-    const storedApiKey = localStorage.getItem("openai_api_key");
-    if (storedApiKey) {
-        apiKeyInput.value = storedApiKey;
-    }
+    let apiKey = "";
+    let questionLimit = 5;
+    let tabUrl = "";
 
-    // Load and apply theme
-    function applyTheme() {
-        const isDarkMode = localStorage.getItem("dark_mode") === "enabled";
-        document.body.classList.toggle("dark-mode", isDarkMode);
-        toggleThemeBtn.innerText = isDarkMode ? "☀️ Light Mode" : "🌙 Dark Mode";
-    }
-
-    applyTheme(); // Apply saved theme
-
-    // Toggle Theme
-    toggleThemeBtn.addEventListener("click", function () {
-        const isDarkMode = document.body.classList.toggle("dark-mode");
-        localStorage.setItem("dark_mode", isDarkMode ? "enabled" : "disabled");
-        applyTheme();
+    // Get the current tab URL
+    chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+        tabUrl = tabs[0]?.url || "";
+        loadStoredData();
     });
 
-    // Save API Key
-    saveApiKeyBtn.addEventListener("click", function () {
-        const apiKey = apiKeyInput.value.trim();
-        if (apiKey) {
-            localStorage.setItem("openai_api_key", apiKey);
-            alert("API Key saved!");
-        } else {
-            alert("Please enter a valid API Key.");
+    // Load stored API key & question limit
+    chrome.storage.local.get(["apiKey", "questionLimit"], (data) => {
+        if (data.apiKey) {
+            apiKey = data.apiKey;
+            apiKeyInput.value = "******"; 
+        }
+        if (data.questionLimit) {
+            questionLimit = data.questionLimit;
+            questionLimitInput.value = questionLimit;
         }
     });
 
-    // Change API Key
-    changeApiKeyBtn.addEventListener("click", function () {
-        localStorage.removeItem("openai_api_key");
+    // Save API key
+    saveApiKeyButton.addEventListener("click", () => {
+        apiKey = apiKeyInput.value;
+        chrome.storage.local.set({ apiKey });
+        alert("API Key saved!");
+        apiKeyInput.value = "******"; 
+    });
+
+    // Change API key
+    changeApiKeyButton.addEventListener("click", () => {
         apiKeyInput.value = "";
-        alert("API Key removed. Enter a new one.");
+        apiKeyInput.focus();
     });
 
-    // Ask a Question
-    askQuestionBtn.addEventListener("click", function () {
-        const question = questionInput.value.trim();
-        const apiKey = localStorage.getItem("openai_api_key");
+    // Save question limit
+    saveLimitButton.addEventListener("click", () => {
+        questionLimit = parseInt(questionLimitInput.value, 10) || 5;
+        chrome.storage.local.set({ questionLimit });
+        alert("Question limit saved!");
+    });
 
-        if (!question) {
-            alert("Please enter a question!");
-            return;
-        }
-        if (!apiKey) {
-            alert("Please save your API Key first.");
-            return;
-        }
+    // Load stored Q&A for this page
+    function loadStoredData() {
+        if (!tabUrl) return;
+        chrome.storage.local.get([tabUrl], (data) => {
+            const storedData = data[tabUrl] || [];
+            responseContainer.innerHTML = "";
+            storedData.forEach(({ question, answer }) => {
+                addQuestionToUI(question, answer);
+            });
+        });
+    }
 
-        loadingIndicator.style.display = "block"; // Show processing indicator
+    // Add a Q&A pair to the UI
+    function addQuestionToUI(question, answer) {
+        const item = document.createElement("div");
+        item.className = "question-item";
+        item.innerHTML = `<strong>Q:</strong> ${question} <br> <strong>A:</strong> ${answer}`;
+        responseContainer.prepend(item); 
+    }
 
-        // Get current tab URL
-        chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
-            if (!tabs || tabs.length === 0) {
-                alert("Could not get the current tab.");
-                loadingIndicator.style.display = "none";
-                return;
+    // Ask a new question
+    askButton.addEventListener("click", async () => {
+        const question = document.getElementById("question").value.trim();
+        if (!question) return alert("Please enter a question.");
+        if (!apiKey) return alert("Please set an API key first.");
+
+        loadingIndicator.style.display = "block";
+
+        chrome.tabs.query({ active: true, currentWindow: true }, async (tabs) => {
+            const tabUrl = tabs[0]?.url || "";
+            if (!tabUrl) return alert("Unable to retrieve the page URL.");
+
+            const response = await fetch("http://127.0.0.1:8000/process_page/", {
+                method: "POST",
+                headers: { "Content-Type": "application/json","Authorization": `Bearer ${apiKey}` },
+                body: JSON.stringify({ url: tabUrl, question, apiKey }),
+            });
+
+            loadingIndicator.style.display = "none";
+
+            if (!response.ok) {
+                return alert("Error: No response received.");
             }
 
-            const url = tabs[0].url;
+            const data = await response.json();
+            const answer = data.answer || "No answer available.";
 
-            // Send request to backend
-            fetch("http://127.0.0.1:8000/process_page/", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    "Authorization": `Bearer ${apiKey}`
-                },
-                body: JSON.stringify({ url: url, question: question })
-            })
-            .then(response => response.json())
-            .then(data => {
-                loadingIndicator.style.display = "none"; // Hide processing indicator
-                if (data.answer) {
-                    displayResponse(question, data.answer);
-                } else {
-                    displayResponse(question, "Error: No response received.");
-                }
-            })
-            .catch(error => {
-                loadingIndicator.style.display = "none";
-                displayResponse(question, "Error: Failed to fetch response.");
-            });
+            addQuestionToUI(question, answer);
+            saveQuestionToStorage(tabUrl, question, answer);
         });
     });
 
-    // Function to display response at the top
-    function displayResponse(question, answer) {
-        const qaBox = document.createElement("div");
-        qaBox.className = "question-item";
-        qaBox.innerHTML = `<strong>Q:</strong> ${question}<br><p class="answer"><strong>A:</strong> ${answer}</p>`;
+    // Save Q&A pair to storage
+    function saveQuestionToStorage(tabUrl, question, answer) {
+        chrome.storage.local.get([tabUrl], (data) => {
+            let storedData = data[tabUrl] || [];
+            storedData.unshift({ question, answer });
 
-        responseContainer.prepend(qaBox);
-        questionInput.value = "";
+            if (storedData.length > questionLimit) {
+                storedData = storedData.slice(0, questionLimit);
+            }
+
+            chrome.storage.local.set({ [tabUrl]: storedData });
+        });
     }
+
+    // Theme Toggle
+    chrome.storage.local.get(["theme"], (data) => {
+        if (data.theme === "dark") {
+            document.body.classList.add("dark-mode");
+            themeToggle.textContent = "☀️";
+        }
+    });
+
+    themeToggle.addEventListener("click", () => {
+        const isDarkMode = document.body.classList.toggle("dark-mode");
+        themeToggle.textContent = isDarkMode ? "☀️" : "🌙";
+        chrome.storage.local.set({ theme: isDarkMode ? "dark" : "light" });
+    });
 });
