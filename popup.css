@@ -76,12 +76,15 @@ button:disabled {
     gap: 5px;
 }
 #responseContainer {
-    max-height: 60px; /* Ensures scrollability */
+    /*max-height: 200px; /* Ensures scrollability */
+    height: 150px;  /* Fixed height */
     overflow-y: auto; /* Enables scrolling only inside this */
     padding: 10px;
     border: 1px solid #ccc;
     border-radius: 5px;
     background: #f9f9f9;
+    white-space: pre-wrap; /* Ensures text wraps properly */
+    word-wrap: break-word; /* Prevents text overflow */
 }
 .dark-mode #responseContainer {
     background: #333;
@@ -108,16 +111,16 @@ button:disabled {
     position: relative;
 }
 /* Icons container */
-.theme-toggle,.settings-icon {
+.theme-toggle,.settings-icon,.ask-icon {
     cursor: pointer;
     font-size: 18px;
     transition: transform 0.3s ease;
 }
-.theme-toggle:hover,.settings-icon {
+.theme-toggle:hover,.settings-icon,.ask-icon active {
     transform: scale(1.1);
 }
 .icons {
-    display: flex;
+    display: flex;   
     gap: 10px;
     position: absolute;
     right: 10px;  /* Moves icons to the right */

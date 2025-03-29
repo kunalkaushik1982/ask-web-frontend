@@ -1,4 +1,14 @@
 document.addEventListener("DOMContentLoaded", async () => {
+    const themeToggle = document.getElementById("toggleTheme");
+    const settingsIcon = document.getElementById("openSettings");
+    const askIcon = document.getElementById("openAskQuestion"); // New Ask Question Icon
+
+    
+    const headerTitle = document.getElementById("headerTitle"); // Get the header title element
+
+    const qaTab = document.getElementById("qaSection");
+    const settingsTab = document.getElementById("settingsSection");
+
     const askButton = document.getElementById("askQuestion");
     const responseContainer = document.getElementById("responseContainer");
     const loadingIndicator = document.getElementById("loading");
@@ -7,16 +17,8 @@ document.addEventListener("DOMContentLoaded", async () => {
     const changeApiKeyButton = document.getElementById("changeApiKey");
     const questionLimitInput = document.getElementById("questionLimit");
     const saveLimitButton = document.getElementById("saveLimit");
-    const themeToggle = document.getElementById("toggleTheme");
-    const settingsIcon = document.getElementById("openSettings");
     const prevQuestionButton = document.getElementById("prevQuestion");
     const nextQuestionButton = document.getElementById("nextQuestion");
-
-    // Tab elements
-    const qaTab = document.getElementById("qaSection");
-    const settingsTab = document.getElementById("settingsSection");
-    const qaTabBtn = document.getElementById("qaTabBtn");
-    const settingsTabBtn = document.getElementById("settingsTabBtn");
 
     let apiKey = "";
     let questionLimit = 5;
@@ -42,28 +44,21 @@ document.addEventListener("DOMContentLoaded", async () => {
         chrome.storage.local.set({ theme: isDarkMode ? "dark" : "light" });
     });
 
-    // ✅ Switch to Settings Tab when ⚙️ is clicked
+    // ✅ Open Settings Tab when ⚙️ is clicked
     settingsIcon.addEventListener("click", () => {
-        switchToSettings();
+        qaTab.classList.add("hidden");
+        settingsTab.classList.remove("hidden");
+        // ✅ Change the header title
+        headerTitle.textContent = "Change Settings";
     });
 
-    // ✅ Handle Tab Switching
-    qaTabBtn.addEventListener("click", switchToQA);
-    settingsTabBtn.addEventListener("click", switchToSettings);
-
-    function switchToQA() {
-        qaTab.classList.remove("hidden");
+    // ✅ Open Ask Question Tab when ❓ is clicked
+    askIcon.addEventListener("click", () => {
         settingsTab.classList.add("hidden");
-        qaTabBtn.classList.add("active");
-        settingsTabBtn.classList.remove("active");
-    }
-
-    function switchToSettings() {
-        settingsTab.classList.remove("hidden");
-        qaTab.classList.add("hidden");
-        settingsTabBtn.classList.add("active");
-        qaTabBtn.classList.remove("active");
-    }
+        qaTab.classList.remove("hidden");
+        // ✅ Change the header title
+        headerTitle.textContent = "Ask Questions";
+    });
 
     // ✅ Get the current tab URL
     chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
@@ -82,6 +77,39 @@ document.addEventListener("DOMContentLoaded", async () => {
             questionLimitInput.value = questionLimit;
         }
     });
+
+    // ✅ Save API Key
+    saveApiKeyButton.addEventListener("click", () => {
+        const newApiKey = apiKeyInput.value.trim();
+        if (!newApiKey) return alert("Please enter an API Key.");
+        
+        chrome.storage.local.set({ apiKey: newApiKey }, () => {
+            apiKey = newApiKey;
+            apiKeyInput.value = "******"; // Hide API key after saving
+            alert("API Key saved successfully!");
+        });
+    });
+
+    // ✅ Change API Key (Allows User to Enter a New Key)
+    changeApiKeyButton.addEventListener("click", () => {
+        apiKeyInput.value = "";
+        apiKeyInput.focus();
+    });
+
+    // ✅ Save Question Limit
+    saveLimitButton.addEventListener("click", () => {
+        const newLimit = parseInt(questionLimitInput.value, 10);
+        if (isNaN(newLimit) || newLimit < 1) {
+            alert("Please enter a valid number (1 or higher).");
+            return;
+        }
+        
+        chrome.storage.local.set({ questionLimit: newLimit }, () => {
+            questionLimit = newLimit;
+            alert("Question limit updated successfully!");
+        });
+    });
+
 
     // ✅ Load stored Q&A
     function loadStoredData() {
@@ -119,6 +147,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     // ✅ Handle asking a new question
     askButton.addEventListener("click", async () => {
+        const questionInput = document.getElementById("question");
         const question = document.getElementById("question").value.trim();
         if (!question) return alert("Please enter a question.");
         if (!apiKey) return alert("Please set an API key first.");
@@ -149,6 +178,9 @@ document.addEventListener("DOMContentLoaded", async () => {
                 questions.pop();
             }
             chrome.storage.local.set({ [tabUrl]: questions });
+            
+            // ✅ Clear input box after response
+            questionInput.value = "";
             currentIndex = 0;
             renderQuestion();
         });
@@ -170,24 +202,4 @@ document.addEventListener("DOMContentLoaded", async () => {
         }
     });
 
-    // ✅ Save API Key
-    saveApiKeyButton.addEventListener("click", () => {
-        chrome.storage.local.set({ apiKey: apiKeyInput.value }, () => {
-            alert("API Key saved!");
-            apiKeyInput.value = "******";
-        });
-    });
-
-    // ✅ Change API Key (Clear input)
-    changeApiKeyButton.addEventListener("click", () => {
-        apiKeyInput.value = "";
-        apiKeyInput.focus();
-    });
-
-    // ✅ Save Question Limit
-    saveLimitButton.addEventListener("click", () => {
-        chrome.storage.local.set({ questionLimit: parseInt(questionLimitInput.value, 10) || 5 }, () => {
-            alert("Question limit saved!");
-        });
-    });
 });
