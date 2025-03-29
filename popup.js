@@ -8,6 +8,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     const questionLimitInput = document.getElementById("questionLimit");
     const saveLimitButton = document.getElementById("saveLimit");
     const themeToggle = document.getElementById("toggleTheme");
+    const settingsIcon = document.getElementById("openSettings");
     const prevQuestionButton = document.getElementById("prevQuestion");
     const nextQuestionButton = document.getElementById("nextQuestion");
 
@@ -33,6 +34,13 @@ document.addEventListener("DOMContentLoaded", async () => {
         const isDarkMode = document.body.classList.toggle("dark-mode");
         themeToggle.textContent = isDarkMode ? "☀️" : "🌙";
         chrome.storage.local.set({ theme: isDarkMode ? "dark" : "light" });
+    });
+
+    // Open Settings Page
+    settingsIcon.addEventListener("click", () => {
+        alert("Settings Page Coming Soon!");
+        //chrome.tabs.create({ url: "settings.html" });
+        // You can redirect to another settings page like `chrome.runtime.openOptionsPage()`
     });
 
     // ✅ Get the current tab URL

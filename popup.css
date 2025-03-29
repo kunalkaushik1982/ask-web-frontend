@@ -77,12 +77,21 @@ button:disabled {
     display: flex;
     justify-content: space-between;
     align-items: center;
+    padding-bottom: 5px;
+    position: relative;
 }
-.theme-toggle {
+.theme-toggle,.settings-icon {
     cursor: pointer;
     font-size: 18px;
     transition: transform 0.3s ease;
 }
-.theme-toggle:hover {
+.theme-toggle:hover,.settings-icon {
     transform: scale(1.1);
+}
+.icons {
+    display: flex;
+    gap: 10px;
+    position: absolute;
+    right: 10px;  /* Moves icons to the right */
+    top: 0;
 }
