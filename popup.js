@@ -64,12 +64,12 @@ document.addEventListener("DOMContentLoaded", async () => {
         });
     }
 
-    // Add a Q&A pair to the UI
+    // Add a Q&A pair to the UI with animation
     function addQuestionToUI(question, answer) {
         const item = document.createElement("div");
         item.className = "question-item";
         item.innerHTML = `<strong>Q:</strong> ${question} <br> <strong>A:</strong> ${answer}`;
-        responseContainer.prepend(item); 
+        responseContainer.prepend(item);
     }
 
     // Ask a new question

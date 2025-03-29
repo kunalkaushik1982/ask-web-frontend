@@ -11,6 +11,12 @@
             width: 320px;
             transition: background-color 0.3s, color 0.3s;
         }
+        .container {
+            display: flex;
+            flex-direction: column;
+            align-items: stretch;
+            gap: 8px;
+        }
         .dark-mode {
             background-color: #121212;
             color: #ffffff;
@@ -18,9 +24,20 @@
         input, button {
             width: 100%;
             margin-top: 5px;
-            padding: 8px;
-            border-radius: 5px;
+            padding: 10px;
+            border-radius: 8px;
             border: 1px solid #ddd;
+            box-sizing: border-box;
+            transition: all 0.3s ease;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            cursor: pointer;
+            box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.2);
+        }
+        button:hover {
+            background: #0056b3;
         }
         .progress {
             display: none;
@@ -36,6 +53,13 @@
             padding: 10px;
             border-radius: 5px;
             background: #f1f1f1;
+            opacity: 0;
+            transform: translateY(10px);
+            animation: fadeIn 0.5s forwards;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
         }
         .dark-mode .question-item {
             background: #333;
@@ -48,6 +72,10 @@
         .theme-toggle {
             cursor: pointer;
             font-size: 18px;
+            transition: transform 0.3s ease;
+        }
+        .theme-toggle:hover {
+            transform: scale(1.1);
         }
     </style>
 </head>
@@ -58,18 +86,23 @@
     </div>
 
     <label for="apiKey">OpenAI API Key:</label>
-    <input type="password" id="apiKey" placeholder="Enter API Key" />
-    <button id="saveApiKey">Save API Key</button>
-    <button id="changeApiKey">Change API Key</button>
-
+    <div class="container">
+        <input type="password" id="apiKey" placeholder="Enter API Key" />
+        <button id="saveApiKey">Save API Key</button>
+        <button id="changeApiKey">Change API Key</button>
+    </div>  
+    
     <label for="question">Your Question:</label>
-    <input type="text" id="question" placeholder="Type a question..." />
-    <button id="askQuestion">Ask</button>
+    <div class="container">
+        <input type="text" id="question" placeholder="Type a question..." />
+        <button id="askQuestion">Ask</button>
+    </div>
 
-    <label for="questionLimit">Max Questions Per Page:</label>
-    <input type="number" id="questionLimit" min="1" value="5" />
-    <button id="saveLimit">Save Limit</button>
-
+    <div class="container">
+        <label for="questionLimit">Max Questions Per Page:</label>
+        <input type="number" id="questionLimit" min="1" value="5" />
+        <button id="saveLimit">Save Limit</button>
+    </div>
     <div class="progress" id="loading">Processing...</div>
 
     <div class="question-container" id="responseContainer"></div>
