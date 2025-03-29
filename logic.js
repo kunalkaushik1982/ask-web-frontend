@@ -11,12 +11,75 @@ document.addEventListener("DOMContentLoaded", async () => {
     const responseContainer = document.getElementById("responseContainer");
     const loadingIndicator = document.getElementById("loading");
 
+    const summarizeButton = document.getElementById("summarizePage");
+    const summaryStyleDropdown = document.getElementById("summaryStyle");
+    const summaryContainer = document.getElementById("summaryContainer");
+    const summaryLoading = document.getElementById("summaryLoading");
+    
     let apiKey = "";
     let questionLimit = 5;
     let tabUrl = "";
     let questions = [];
     let currentIndex = 0;
 
+    // Hide loading indicator initially
+    summaryLoading.style.display = "none";
+
+
+    // Fetch the current tab's URL
+    function getCurrentTabUrl(callback) {
+            chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
+                const tab = tabs[0];
+                if (tab) {
+                    callback(tab.url);
+                }
+            });
+        }
+    
+    // Handle summarization request
+    summarizeButton.addEventListener("click", function () {
+            //const apiKey = apiKeyInput.value.trim();
+            if (!apiKey) {
+                alert("Please enter your OpenAI API key in the settings.");
+                return;
+            }    
+            getCurrentTabUrl(function (url) {
+                const selectedStyle = summaryStyleDropdown.value;
+    
+                summaryLoading.style.display = "block";
+                summaryContainer.innerHTML = ""; // Clear previous summary
+    
+                fetch("http://127.0.0.1:8000/summarize_page/", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Authorization": `Bearer ${apiKey}`
+                    },
+                    body: JSON.stringify({
+                        url: url,
+                        style: selectedStyle,
+                        apiKey
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    summaryLoading.style.display = "none";
+    
+                    if (data.summary) {
+                        summaryContainer.innerHTML = `<p>${data.summary.replace(/\n/g, "<br>")}</p>`;
+                    } else {
+                        summaryContainer.innerHTML = "<p>Error: Could not generate summary.</p>";
+                    }
+                })
+                .catch(error => {
+                    summaryLoading.style.display = "none";
+                    summaryContainer.innerHTML = "<p>Error processing the request.</p>";
+                    console.error("Error:", error);
+                });
+            });
+        });
+
+    
     // 🔹 Load stored API key & question limit
     chrome.storage.local.get(["apiKey", "questionLimit"], (data) => {
         if (data.apiKey) {

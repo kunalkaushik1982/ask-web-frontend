@@ -111,12 +111,12 @@ button:disabled {
     position: relative;
 }
 /* Icons container */
-.theme-toggle,.settings-icon,.ask-icon {
+.theme-toggle,.settings-icon,.ask-icon,.summarize-icon {
     cursor: pointer;
     font-size: 18px;
     transition: transform 0.3s ease;
 }
-.theme-toggle:hover,.settings-icon,.ask-icon active {
+.theme-toggle:hover,.settings-icon,.summarize-icon,.ask-icon active {
     transform: scale(1.1);
 }
 .icons {

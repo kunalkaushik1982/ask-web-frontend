@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WebPage Q&A</title>
+    <title>WebPage Q&A & Summarization</title>
     <link rel="stylesheet" href="popup.css">
 </head>
 <body>
@@ -12,7 +12,8 @@
         <div class="icons">
             <span class="theme-toggle" id="toggleTheme">🌙</span>
             <span class="settings-icon" id="openSettings">⚙️</span>
-            <span class="ask-icon active" id="openAskQuestion">❓</span>  <!-- New Ask Question Icon -->
+            <span class="ask-icon active" id="openAskQuestion">❓</span>
+            <span class="summarize-icon" id="openSummarize">📄</span> <!-- New Summarization Icon -->
         </div>
     </div>
 
@@ -35,6 +36,23 @@
         </div>
     </div>
 
+    <!-- Summarization Section (Initially Hidden) -->
+    <div id="summarizationSection" class="hidden">
+        <h3>Summarization</h3>
+        <label for="summaryStyle">Choose Summary Style:</label>
+        <select id="summaryStyle">
+            <option value="Concise">Concise</option>
+            <option value="Bullet Points">Bullet Points</option>
+            <option value="Casual">Casual</option>
+            <option value="Professional">Professional</option>
+        </select>
+        <button id="summarizePage">Summarize</button>
+
+        <div class="progress" id="summaryLoading">Summarizing...</div>
+
+        <div id="summaryContainer"></div>
+    </div>
+
     <!-- Settings Section (Initially Hidden) -->
     <div id="settingsSection" class="hidden">
         <label for="apiKey">OpenAI API Key:</label>
@@ -47,10 +65,7 @@
         <button id="saveLimit">Save Limit</button>
     </div>
 
-    <!--<script src="popup.js">
-    <script src="settings.js"></script>
-    <script src="askquestion.js"></script>
-    </script>-->
+    <!-- <script src="popup.js"></script> -->
     <script src="ui.js"></script>
     <script src="logic.js"></script>
 

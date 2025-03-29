@@ -5,6 +5,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const themeToggle = document.getElementById("toggleTheme");
     const settingsIcon = document.getElementById("openSettings");
     const askIcon = document.getElementById("openAskQuestion");
+    const sumIcon = document.getElementById("openSummarize");
     const headerTitle = document.getElementById("headerTitle");
     const qaTab = document.getElementById("qaSection");
     const settingsTab = document.getElementById("settingsSection");
@@ -28,15 +29,28 @@ document.addEventListener("DOMContentLoaded", () => {
     // 🔹 Open Settings Tab
     settingsIcon.addEventListener("click", () => {
         qaTab.classList.add("hidden");
+        summarizationSection.classList.add("hidden");
         settingsTab.classList.remove("hidden");
+        
         headerTitle.textContent = "Change Settings";
     });
 
     // 🔹 Open Ask Question Tab
     askIcon.addEventListener("click", () => {
         settingsTab.classList.add("hidden");
+        summarizationSection.classList.add("hidden");
         qaTab.classList.remove("hidden");
+
         headerTitle.textContent = "Ask Questions";
+    });
+
+    // 🔹 Open Ask Summary Tab
+    sumIcon.addEventListener("click", () => {
+        settingsTab.classList.add("hidden");
+        qaTab.classList.add("hidden");
+        summarizationSection.classList.remove("hidden");
+
+        headerTitle.textContent = "Ask Summarization";
     });
 
     // 🔹 Previous Question Button
