@@ -111,12 +111,12 @@ button:disabled {
     position: relative;
 }
 /* Icons container */
-.theme-toggle,.settings-icon,.ask-icon,.summarize-icon {
+.theme-toggle,.settings-icon,.ask-icon,.summarize-icon,.suggestions-icon {
     cursor: pointer;
     font-size: 18px;
     transition: transform 0.3s ease;
 }
-.theme-toggle:hover,.settings-icon,.summarize-icon,.ask-icon active {
+.theme-toggle:hover,.settings-icon,.summarize-icon,.suggestions-icon,.ask-icon active {
     transform: scale(1.1);
 }
 .icons {
@@ -125,4 +125,44 @@ button:disabled {
     position: absolute;
     right: 10px;  /* Moves icons to the right */
     top: 0;
+}
+
+/* Suggestions List Styling */
+.suggestions-list {
+    list-style-type: none;
+    padding: 0;
+    margin-top: 10px;
+}
+
+.suggestion-item {
+    background: #f1f1f1;
+    padding: 10px;
+    margin-bottom: 5px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background 0.3s, transform 0.2s;
+    font-size: 14px;
+    text-align:justify;
+    box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.suggestion-item:hover {
+    background: #007bff;
+    color: white;
+    transform: scale(1.05);
+}
+
+.suggestion-item:active {
+    background: #0056b3;
+}
+
+/* Dark mode support */
+.dark-mode .suggestion-item {
+    background: #333;
+    color: white;
+}
+
+.dark-mode .suggestion-item:hover {
+    background: #007bff;
+    color: #fff;
 }

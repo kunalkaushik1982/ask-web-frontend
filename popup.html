@@ -14,6 +14,7 @@
             <span class="settings-icon" id="openSettings">⚙️</span>
             <span class="ask-icon active" id="openAskQuestion">❓</span>
             <span class="summarize-icon" id="openSummarize">📄</span> <!-- New Summarization Icon -->
+            <span class="suggestions-icon" id="openSuggestions">💡</span> <!-- New Suggestions Icon -->
         </div>
     </div>
 
@@ -51,6 +52,17 @@
         <div class="progress" id="summaryLoading">Summarizing...</div>
 
         <div id="summaryContainer"></div>
+    </div>
+
+     <!-- Suggestions Section (Initially Hidden) -->
+    <div id="suggestionsSection" class="hidden">
+        <h3>Contextual Suggestions</h3>
+        <p>Click "Analyze" to extract key entities and get recommendations.</p>
+        <button id="fetchSuggestions">Analyze</button>
+
+        <div class="progress" id="suggestionsLoading">Analyzing...</div>
+        
+        <div id="suggestionsContainer"></div>
     </div>
 
     <!-- Settings Section (Initially Hidden) -->

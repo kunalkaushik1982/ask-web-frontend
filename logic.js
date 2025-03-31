@@ -15,6 +15,10 @@ document.addEventListener("DOMContentLoaded", async () => {
     const summaryStyleDropdown = document.getElementById("summaryStyle");
     const summaryContainer = document.getElementById("summaryContainer");
     const summaryLoading = document.getElementById("summaryLoading");
+
+    const fetchSuggestionsButton = document.getElementById("fetchSuggestions");
+    const suggestionsContainer = document.getElementById("suggestionsContainer");
+    const suggestionsLoading = document.getElementById("suggestionsLoading");
     
     let apiKey = "";
     let questionLimit = 5;
@@ -24,6 +28,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     // Hide loading indicator initially
     summaryLoading.style.display = "none";
+    suggestionsLoading.style.display = "none";
 
 
     // Fetch the current tab's URL
@@ -39,6 +44,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     // Handle summarization request
     summarizeButton.addEventListener("click", function () {
             //const apiKey = apiKeyInput.value.trim();
+            console.log(apiKey)
             if (!apiKey) {
                 alert("Please enter your OpenAI API key in the settings.");
                 return;
@@ -166,6 +172,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     // 🔹 Handle asking a new question
     askButton.addEventListener("click", async () => {
+        console.log(apiKey)
         const questionInput = document.getElementById("question");
         const question = questionInput.value.trim();
         if (!question) return alert("Please enter a question.");
@@ -210,5 +217,97 @@ document.addEventListener("DOMContentLoaded", async () => {
         renderQuestion();
     };
 
+    // 🔹 Handle asking a suggestion
+    fetchSuggestionsButton.addEventListener("click", async () => {
+        console.log("1")
+        console.log(apiKey)
+        if (!apiKey) return alert("Please set an API key first.");
+
+        suggestionsLoading.style.display = "block";
+        suggestionsContainer.innerHTML = "";
+
+        chrome.tabs.query({ active: true, currentWindow: true }, async (tabs) => {
+            const tabUrl = tabs[0]?.url || "";
+            if (!tabUrl) return alert("Unable to retrieve the page URL.");
+
+            const response = await fetch("http://127.0.0.1:8000/get_suggestions/", {
+                method: "POST",
+                headers: { "Content-Type": "application/json", "Authorization": `Bearer ${apiKey}` },
+                body: JSON.stringify({ url: tabUrl }),
+            });
+
+            suggestionsLoading.style.display = "none";
+            console.log(response)
+            if (!response.ok) {
+                return alert("Error: No suggestions available.");
+            }
+
+            const data = await response.json();
+            console.log(data)
+            displaySuggestions(data.suggestions);
+        });
+    });
+    
+    function displaySuggestions(response) {
+        // Parse the response if it's a JSON string
+        let data;
+        try {
+            data = typeof response === "string" ? JSON.parse(response) : response;
+        } catch (error) {
+            console.error("Invalid JSON response", error);
+            return;
+        }
+    
+        // Ensure the response contains phrases
+        if (!data.phrases || !Array.isArray(data.phrases)) {
+            console.error("No phrases found in response");
+            return;
+        }
+    
+        // Get the suggestions container
+        const container = document.getElementById("suggestionsContainer");
+        if (!container) {
+            console.error("Container element not found");
+            return;
+        }
+    
+        // Clear existing suggestions
+        container.innerHTML = "";
+    
+        // Create and append a title for the suggestions
+        const title = document.createElement("h3");
+        title.textContent = "Key Phrases";
+        container.appendChild(title);
+    
+        // Create a list for phrases
+        const list = document.createElement("ul");
+        list.classList.add("suggestions-list");
+    
+        // Append phrases to the list as clickable items
+        data.phrases.forEach(phrase => {
+            const listItem = document.createElement("li");
+            listItem.textContent = phrase;
+            listItem.classList.add("suggestion-item");
+            listItem.addEventListener("click", function () {
+                copyToClipboard(phrase);
+            });
+            list.appendChild(listItem);
+        });
+    
+        // Append the list to the container
+        container.appendChild(list);
+    }
+    
+    // Function to copy text to clipboard
+    function copyToClipboard(text) {
+        navigator.clipboard.writeText(text)
+            .then(() => {
+                alert("Copied: " + text);
+            })
+            .catch(err => {
+                console.error("Failed to copy text:", err);
+            });
+    }
+    
     console.log("✅ Logic event listeners initialized");
 });
