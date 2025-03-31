@@ -1,351 +1,228 @@
 document.addEventListener("DOMContentLoaded", async () => {
     console.log("✅ Logic script loaded");
 
-    const apiKeyInput = document.getElementById("apiKey");
-    const saveApiKeyButton = document.getElementById("saveApiKey");
-    const changeApiKeyButton = document.getElementById("changeApiKey");
-    const questionLimitInput = document.getElementById("questionLimit");
-    const saveLimitButton = document.getElementById("saveLimit");
-
-    const askButton = document.getElementById("askQuestion");
-    const responseContainer = document.getElementById("responseContainer");
-    const loadingIndicator = document.getElementById("loading");
-
-    const summarizeButton = document.getElementById("summarizePage");
-    const summaryStyleDropdown = document.getElementById("summaryStyle");
-    const summaryContainer = document.getElementById("summaryContainer");
-    const summaryLoading = document.getElementById("summaryLoading");
-
-    const fetchSuggestionsButton = document.getElementById("fetchSuggestions");
-    const suggestionsContainer = document.getElementById("suggestionsContainer");
-    const suggestionsLoading = document.getElementById("suggestionsLoading");
-    
-    let apiKey = "";
-    let questionLimit = 5;
-    let tabUrl = "";
-    let questions = [];
-    let currentIndex = 0;
-
-    // Hide loading indicator initially
-    summaryLoading.style.display = "none";
-    suggestionsLoading.style.display = "none";
-
-
-    // Fetch the current tab's URL
-    function getCurrentTabUrl(callback) {
-            chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
-                const tab = tabs[0];
-                if (tab) {
-                    callback(tab.url);
-                }
-            });
-        }
-    
-    // Handle summarization request
-    summarizeButton.addEventListener("click", function () {
-            //const apiKey = apiKeyInput.value.trim();
-            console.log(apiKey)
-            if (!apiKey) {
-                alert("Please enter your OpenAI API key in the settings.");
-                return;
-            }    
-            getCurrentTabUrl(function (url) {
-                const selectedStyle = summaryStyleDropdown.value;
-    
-                summaryLoading.style.display = "block";
-                summaryContainer.innerHTML = ""; // Clear previous summary
-    
-                fetch("http://127.0.0.1:8000/summarize_page/", {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                        "Authorization": `Bearer ${apiKey}`
-                    },
-                    body: JSON.stringify({
-                        url: url,
-                        style: selectedStyle,
-                        apiKey
-                    })
-                })
-                .then(response => response.json())
-                .then(data => {
-                    summaryLoading.style.display = "none";
-    
-                    if (data.summary) {
-                        summaryContainer.innerHTML = `<p>${data.summary.replace(/\n/g, "<br>")}</p>`;
-                    } else {
-                        summaryContainer.innerHTML = "<p>Error: Could not generate summary.</p>";
-                    }
-                })
-                .catch(error => {
-                    summaryLoading.style.display = "none";
-                    summaryContainer.innerHTML = "<p>Error processing the request.</p>";
-                    console.error("Error:", error);
-                });
-            });
-        });
-
-    
-    // 🔹 Load stored API key & question limit
-    chrome.storage.local.get(["apiKey", "questionLimit"], (data) => {
-        if (data.apiKey) {
-            apiKey = data.apiKey;
-            apiKeyInput.value = "******";
-        }
-        if (data.questionLimit) {
-            questionLimit = data.questionLimit;
-            questionLimitInput.value = questionLimit;
-        }
-    });
-
-    // 🔹 Save API Key
-    saveApiKeyButton.addEventListener("click", () => {
-        const newApiKey = apiKeyInput.value.trim();
-        if (!newApiKey) return alert("Please enter an API Key.");
-
-        chrome.storage.local.set({ apiKey: newApiKey }, () => {
-            apiKey = newApiKey;
-            apiKeyInput.value = "******";
-            alert("API Key saved successfully!");
-        });
-    });
-
-    // 🔹 Change API Key (Allows User to Enter a New Key)
-    changeApiKeyButton.addEventListener("click", () => {
-        apiKeyInput.value = "";
-        apiKeyInput.focus();
-    });
-
-    // 🔹 Save Question Limit
-    saveLimitButton.addEventListener("click", () => {
-        const newLimit = parseInt(questionLimitInput.value, 10);
-        if (isNaN(newLimit) || newLimit < 1) {
-            alert("Please enter a valid number (1 or higher).");
-            return;
-        }
-
-        chrome.storage.local.set({ questionLimit: newLimit }, () => {
-            questionLimit = newLimit;
-            alert("Question limit updated successfully!");
-        });
-    });
-
-    // 🔹 Get Current Tab URL
-    chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-        tabUrl = tabs[0]?.url || "";
-        loadStoredData();
-    });
-
-    // 🔹 Load stored questions
-    function loadStoredData() {
-        if (!tabUrl) return;
-        chrome.storage.local.get([tabUrl], (data) => {
-            questions = data[tabUrl] || [];
-            currentIndex = 0;
-            renderQuestion();
-        });
-    }
-
-    // 🔹 Render the current question
-    function renderQuestion() {
-        responseContainer.innerHTML = "";
-
-        if (questions.length > 0) {
-            const { question, answer } = questions[currentIndex];
-            addQuestionToUI(question, answer);
-        } else {
-            responseContainer.innerHTML = "<p>No questions yet.</p>";
-        }
-
-        // 🔹 Disable/Enable navigation buttons
-        document.getElementById("prevQuestion").disabled = currentIndex === 0 || questions.length === 0;
-        document.getElementById("nextQuestion").disabled = currentIndex >= questions.length - 1 || questions.length === 0;
-    }
-
-    // 🔹 Display question in UI
-    function addQuestionToUI(question, answer) {
-        const item = document.createElement("div");
-        item.className = "question-item";
-        item.innerHTML = `<strong>Q:</strong> ${question} <br> <strong>A:</strong> ${answer}`;
-        responseContainer.appendChild(item);
-    }
-
-    // 🔹 Handle asking a new question
-    askButton.addEventListener("click", async () => {
-        console.log(apiKey)
-        const questionInput = document.getElementById("question");
-        const question = questionInput.value.trim();
-        if (!question) return alert("Please enter a question.");
-        if (!apiKey) return alert("Please set an API key first.");
-
-        loadingIndicator.style.display = "block";
-
-        chrome.tabs.query({ active: true, currentWindow: true }, async (tabs) => {
-            const tabUrl = tabs[0]?.url || "";
-            if (!tabUrl) return alert("Unable to retrieve the page URL.");
-
-            const response = await fetch("http://127.0.0.1:8000/process_page/", {
-                method: "POST",
-                headers: { "Content-Type": "application/json", "Authorization": `Bearer ${apiKey}` },
-                body: JSON.stringify({ url: tabUrl, question, apiKey }),
-            });
-
-            loadingIndicator.style.display = "none";
-
-            if (!response.ok) {
-                return alert("Error: No response received.");
-            }
-
-            const data = await response.json();
-            const answer = data.answer || "No answer available.";
-
-            questions.unshift({ question, answer });
-            if (questions.length > questionLimit) {
-                questions.pop();
-            }
-            chrome.storage.local.set({ [tabUrl]: questions });
-
-            questionInput.value = "";
-            currentIndex = 0;
-            renderQuestion();
-        });
-    });
-
-    // 🔹 Change question index
-    window.changeQuestion = (offset) => {
-        currentIndex = Math.max(0, Math.min(currentIndex + offset, questions.length - 1));
-        renderQuestion();
+    // State management
+    const state = {
+        apiKey: "",
+        questionLimit: 5,
+        tabUrl: "",
+        questions: [],
+        currentIndex: 0
     };
 
-    // 🔹 Handle asking a suggestion
-    fetchSuggestionsButton.addEventListener("click", async () => {
-        console.log("1")
-        console.log(apiKey)
-        if (!apiKey) return alert("Please set an API key first.");
-
-        suggestionsLoading.style.display = "block";
-        suggestionsContainer.innerHTML = "";
-
-        chrome.tabs.query({ active: true, currentWindow: true }, async (tabs) => {
-            const tabUrl = tabs[0]?.url || "";
-            if (!tabUrl) return alert("Unable to retrieve the page URL.");
-
-            const response = await fetch("http://127.0.0.1:8000/get_suggestions/", {
-                method: "POST",
-                headers: { "Content-Type": "application/json", "Authorization": `Bearer ${apiKey}` },
-                body: JSON.stringify({ url: tabUrl }),
-            });
-
-            suggestionsLoading.style.display = "none";
-            console.log(response)
-            if (!response.ok) {
-                return alert("Error: No suggestions available.");
-            }
-
-            const data = await response.json();
-            console.log(data)
-            displaySuggestions(data.suggestions);
-        });
-    });
-    
-
-    // Modify suggestion display function
-    function displaySuggestions(response) {
-        let data;
-        try {
-            data = typeof response === "string" ? JSON.parse(response) : response;
-        } catch (error) {
-            console.error("Invalid JSON response", error);
-            return;
-        }
-
-        const container = document.getElementById("suggestionsContainer");
-        if (!container) {
-            console.error("Container element not found");
-            return;
-        }
-
-        container.innerHTML = "";
+    // DOM Elements
+    const elements = {
+        // Settings
+        apiKeyInput: document.getElementById("apiKey"),
+        saveApiKeyButton: document.getElementById("saveApiKey"),
+        changeApiKeyButton: document.getElementById("changeApiKey"),
+        questionLimitInput: document.getElementById("questionLimit"),
+        saveLimitButton: document.getElementById("saveLimit"),
         
-        if (data.phrases && data.phrases.length > 0) {
-            const list = document.createElement("ul");
+        // Ask Questions
+        askButton: document.getElementById("askQuestion"),
+        responseContainer: document.getElementById("responseContainer"),
+        loadingIndicator: document.getElementById("loading"),
+        questionInput: document.getElementById("question"),
+        
+        // Summarize Web Page
+        summarizeButton: document.getElementById("summarizePage"),
+        summaryStyleDropdown: document.getElementById("summaryStyle"),
+        summaryContainer: document.getElementById("summaryContainer"),
+        summaryLoading: document.getElementById("summaryLoading"),
+        
+        // Suggestions
+        fetchSuggestionsButton: document.getElementById("fetchSuggestions"),
+        suggestionsContainer: document.getElementById("suggestionsContainer"),
+        suggestionsLoading: document.getElementById("suggestionsLoading"),
+        relatedLinksContainer: document.getElementById("relatedLinksContainer"),
+        relatedLinksSection: document.getElementById("relatedLinksSection"),
+        
+        // Navigation
+        prevQuestion: document.getElementById("prevQuestion"),
+        nextQuestion: document.getElementById("nextQuestion")
+    };
 
-            data.phrases.forEach(phrase => {
-                const listItem = document.createElement("li");
-                listItem.textContent = phrase;
-                listItem.classList.add("clickable-suggestion");
-                listItem.addEventListener("click", () => fetchRelatedLinks(phrase));
-                list.appendChild(listItem);
-            });
+    // Hide loading indicators initially
+    elements.summaryLoading.style.display = "none";
+    elements.suggestionsLoading.style.display = "none";
 
-            container.appendChild(list);
-        }
-    }
-
-    async function DemofetchRelatedLinks(query) {
-        const relatedLinksContainer = document.getElementById("relatedLinksContainer");
-        const relatedLinksSection = document.getElementById("relatedLinksSection");
-
-        // Show loading message
-        relatedLinksContainer.innerHTML = "<p>Loading...</p>";
-        relatedLinksSection.classList.remove("hidden");
-
-        try {
-            let response = await fetch(`http://127.0.0.1:8000/fetch_related_links?query=${encodeURIComponent(query)}`);
-            let data = await response.json();
-            console.log(data)
-
-            if (data.urls && data.urls.length > 0) {
-                relatedLinksContainer.innerHTML = "";
-                data.urls.forEach(url => {
-                    let link = document.createElement("a");
-                    link.href = url;
-                    link.textContent = url;
-                    link.classList.add("related-link");
-                    link.target = "_blank"; // Open links in new tab
-                    relatedLinksContainer.appendChild(link);
+    // API Service
+    const apiService = {
+        baseUrl: "http://127.0.0.1:8000",
+        
+        async makeRequest(endpoint, method, data) {
+            try {
+                const response = await fetch(`${this.baseUrl}${endpoint}`, {
+                    method: method,
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Authorization": `Bearer ${state.apiKey}`
+                    },
+                    body: data ? JSON.stringify(data) : undefined
                 });
-            } else {
-                relatedLinksContainer.innerHTML = "<p>No links found.</p>";
+                
+                if (!response.ok) {
+                    throw new Error(`API error: ${response.status}`);
+                }
+                
+                return await response.json();
+            } catch (error) {
+                console.error(`Error making request to ${endpoint}:`, error);
+                throw error;
             }
-        } catch (error) {
-            relatedLinksContainer.innerHTML = "<p>Error fetching links.</p>";
-            console.error("Error fetching related links:", error);
+        },
+        
+        async summarizePage(url, style) {
+            return this.makeRequest("/summarize_page/", "POST", {
+                url,
+                style,
+                apiKey: state.apiKey
+            });
+        },
+        
+        async processPage(url, question) {
+            return this.makeRequest("/process_page/", "POST", {
+                url,
+                question,
+                apiKey: state.apiKey
+            });
+        },
+        
+        async getSuggestions(url) {
+            return this.makeRequest("/get_suggestions/", "POST", {
+                url
+            });
+        },
+        
+        async fetchRelatedLinks(query) {
+            return this.makeRequest(`/fetch_related_links?query=${encodeURIComponent(query)}`, "GET");
         }
-    }
+    };
 
-    async function fetchRelatedLinks(query) {
-        const relatedLinksContainer = document.getElementById("relatedLinksContainer");
-        const relatedLinksSection = document.getElementById("relatedLinksSection");
+    // Storage Service
+    const storageService = {
+        async get(keys) {
+            return new Promise(resolve => {
+                chrome.storage.local.get(keys, resolve);
+            });
+        },
+        
+        async set(data) {
+            return new Promise(resolve => {
+                chrome.storage.local.set(data, resolve);
+            });
+        },
+        
+        async saveQuestions() {
+            if (!state.tabUrl) return;
+            await this.set({ [state.tabUrl]: state.questions });
+        }
+    };
+
+    // UI Service
+    const uiService = {
+        toggleLoading(element, isLoading) {
+            element.style.display = isLoading ? "block" : "none";
+        },
+        
+        showAlert(message) {
+            alert(message);
+        },
+        
+        clearInput(element) {
+            element.value = "";
+        },
+        
+        setFocus(element) {
+            element.focus();
+        },
+        
+        renderQuestion() {
+            elements.responseContainer.innerHTML = "";
     
-        // Show loading message
-        relatedLinksContainer.innerHTML = "<p>Loading...</p>";
-        relatedLinksSection.classList.remove("hidden");
+            if (state.questions.length > 0) {
+                const { question, answer } = state.questions[state.currentIndex];
+                this.addQuestionToUI(question, answer);
+            } else {
+                elements.responseContainer.innerHTML = "<p>No questions yet.</p>";
+            }
     
-        try {
-            let response = await fetch(`http://127.0.0.1:8000/fetch_related_links?query=${encodeURIComponent(query)}`);
-            let data = await response.json();
+            // Update navigation buttons
+            elements.prevQuestion.disabled = state.currentIndex === 0 || state.questions.length === 0;
+            elements.nextQuestion.disabled = state.currentIndex >= state.questions.length - 1 || state.questions.length === 0;
+        },
+        
+        addQuestionToUI(question, answer) {
+            const item = document.createElement("div");
+            item.className = "question-item";
+            item.innerHTML = `<strong>Q:</strong> ${question} <br> <strong>A:</strong> ${answer}`;
+            elements.responseContainer.appendChild(item);
+        },
+        
+        displaySummary(summary) {
+            elements.summaryContainer.innerHTML = summary ? 
+                `<p>${summary.replace(/\n/g, "<br>")}</p>` : 
+                "<p>Error: Could not generate summary.</p>";
+        },
+        
+        displaySuggestions(suggestions) {
+            elements.suggestionsContainer.innerHTML = "";
             
-            console.log("Fetched Data:", data, "Type:", typeof data);
-    
-            // Fix potential issues
-            if (typeof data === "string") {
-                data = JSON.parse(data);  // Convert string to object
+            let data;
+            try {
+                data = typeof suggestions === "string" ? JSON.parse(suggestions) : suggestions;
+            } catch (error) {
+                console.error("Invalid JSON response", error);
+                elements.suggestionsContainer.innerHTML = "<p>Error: Invalid response format.</p>";
+                return;
             }
-    
-            if (data.related_links && Array.isArray(data.related_links)) {
-                data = data.related_links;  // Extract the actual array
+            
+            if (data.phrases && data.phrases.length > 0) {
+                const list = document.createElement("ul");
+                
+                data.phrases.forEach(phrase => {
+                    const listItem = document.createElement("li");
+                    listItem.textContent = phrase;
+                    listItem.classList.add("clickable-suggestion");
+                    listItem.addEventListener("click", () => controller.handleSuggestionClick(phrase));
+                    list.appendChild(listItem);
+                });
+                
+                elements.suggestionsContainer.appendChild(list);
+            } else {
+                elements.suggestionsContainer.innerHTML = "<p>No suggestions available.</p>";
             }
-    
+        },
+        
+        displayRelatedLinks(links) {
+            elements.relatedLinksContainer.innerHTML = "";
+            elements.relatedLinksSection.classList.remove("hidden");
+            
+            let data;
+            try {
+                if (typeof links === "string") {
+                    data = JSON.parse(links);
+                } else {
+                    data = links;
+                }
+                
+                if (data.related_links && Array.isArray(data.related_links)) {
+                    data = data.related_links;
+                }
+            } catch (error) {
+                console.error("Invalid links data", error);
+                elements.relatedLinksContainer.innerHTML = "<p>Error: Invalid response format.</p>";
+                return;
+            }
+            
             if (Array.isArray(data) && data.length > 0) {
-                relatedLinksContainer.innerHTML = ""; // Clear previous results
-    
                 data.forEach(link => {
-                    let linkCard = document.createElement("div");
+                    const linkCard = document.createElement("div");
                     linkCard.classList.add("related-link-card");
-    
-                    let faviconUrl = `https://www.google.com/s2/favicons?sz=64&domain=${link.hostname}`;
-    
+                    
+                    const faviconUrl = `https://www.google.com/s2/favicons?sz=64&domain=${link.hostname}`;
+                    
                     linkCard.innerHTML = `
                         <div class="related-link-content">
                             <img src="${faviconUrl}" alt="Favicon" class="related-link-favicon">
@@ -355,15 +232,226 @@ document.addEventListener("DOMContentLoaded", async () => {
                             </div>
                         </div>
                     `;
-                    relatedLinksContainer.appendChild(linkCard);
+                    elements.relatedLinksContainer.appendChild(linkCard);
                 });
             } else {
-                relatedLinksContainer.innerHTML = "<p>No links found.</p>";
+                elements.relatedLinksContainer.innerHTML = "<p>No links found.</p>";
             }
-        } catch (error) {
-            relatedLinksContainer.innerHTML = "<p>Error fetching links.</p>";
-            console.error("Error fetching related links:", error);
         }
-    }
+    };
+
+    // Chrome Service
+    const chromeService = {
+        async getCurrentTabUrl() {
+            return new Promise(resolve => {
+                chrome.tabs.query({ active: true, currentWindow: true }, function(tabs) {
+                    const tab = tabs[0];
+                    resolve(tab ? tab.url : "");
+                });
+            });
+        }
+    };
+
+    // Controller - coordinates interactions between services
+    const controller = {
+        async init() {
+            // Load stored data
+            await this.loadStoredData();
+            
+            // Set up event listeners
+            this.setupEventListeners();
+            
+            // Get current tab URL
+            state.tabUrl = await chromeService.getCurrentTabUrl();
+            
+            // Load questions for current tab
+            await this.loadQuestionsForCurrentTab();
+        },
+        
+        async loadStoredData() {
+            const data = await storageService.get(["apiKey", "questionLimit"]);
+            
+            if (data.apiKey) {
+                state.apiKey = data.apiKey;
+                elements.apiKeyInput.value = "******";
+            }
+            
+            if (data.questionLimit) {
+                state.questionLimit = data.questionLimit;
+                elements.questionLimitInput.value = state.questionLimit;
+            }
+        },
+        
+        async loadQuestionsForCurrentTab() {
+            if (!state.tabUrl) return;
+            
+            const data = await storageService.get([state.tabUrl]);
+            state.questions = data[state.tabUrl] || [];
+            state.currentIndex = 0;
+            
+            uiService.renderQuestion();
+        },
+        
+        setupEventListeners() {
+            // API Key management
+            elements.saveApiKeyButton.addEventListener("click", () => this.handleSaveApiKey());
+            elements.changeApiKeyButton.addEventListener("click", () => this.handleChangeApiKey());
+            
+            // Question limit
+            elements.saveLimitButton.addEventListener("click", () => this.handleSaveQuestionLimit());
+            
+            // Question handling
+            elements.askButton.addEventListener("click", () => this.handleAskQuestion());
+            
+            // Summarization
+            elements.summarizeButton.addEventListener("click", () => this.handleSummarizePage());
+            
+            // Suggestions
+            elements.fetchSuggestionsButton.addEventListener("click", () => this.handleFetchSuggestions());
+            
+            // Navigation
+            window.changeQuestion = (offset) => this.changeQuestionIndex(offset);
+        },
+        
+        async handleSaveApiKey() {
+            const newApiKey = elements.apiKeyInput.value.trim();
+            if (!newApiKey) {
+                return uiService.showAlert("Please enter an API Key.");
+            }
+            
+            await storageService.set({ apiKey: newApiKey });
+            state.apiKey = newApiKey;
+            elements.apiKeyInput.value = "******";
+            uiService.showAlert("API Key saved successfully!");
+        },
+        
+        handleChangeApiKey() {
+            uiService.clearInput(elements.apiKeyInput);
+            uiService.setFocus(elements.apiKeyInput);
+        },
+        
+        async handleSaveQuestionLimit() {
+            const newLimit = parseInt(elements.questionLimitInput.value, 10);
+            if (isNaN(newLimit) || newLimit < 1) {
+                return uiService.showAlert("Please enter a valid number (1 or higher).");
+            }
+            
+            await storageService.set({ questionLimit: newLimit });
+            state.questionLimit = newLimit;
+            uiService.showAlert("Question limit updated successfully!");
+        },
+        
+        async handleAskQuestion() {
+            const question = elements.questionInput.value.trim();
+            
+            if (!question) {
+                return uiService.showAlert("Please enter a question.");
+            }
+            
+            if (!state.apiKey) {
+                return uiService.showAlert("Please set an API key first.");
+            }
+            
+            uiService.toggleLoading(elements.loadingIndicator, true);
+            
+            try {
+                const tabUrl = await chromeService.getCurrentTabUrl();
+                
+                if (!tabUrl) {
+                    uiService.toggleLoading(elements.loadingIndicator, false);
+                    return uiService.showAlert("Unable to retrieve the page URL.");
+                }
+                
+                const data = await apiService.processPage(tabUrl, question);
+                const answer = data.answer || "No answer available.";
+                
+                // Update questions list
+                state.questions.unshift({ question, answer });
+                if (state.questions.length > state.questionLimit) {
+                    state.questions.pop();
+                }
+                
+                // Save to storage
+                await storageService.saveQuestions();
+                
+                // Clear input and update UI
+                uiService.clearInput(elements.questionInput);
+                state.currentIndex = 0;
+                uiService.renderQuestion();
+            } catch (error) {
+                uiService.showAlert("Error: " + (error.message || "No response received."));
+            } finally {
+                uiService.toggleLoading(elements.loadingIndicator, false);
+            }
+        },
+        
+        async handleSummarizePage() {
+            if (!state.apiKey) {
+                return uiService.showAlert("Please enter your OpenAI API key in the settings.");
+            }
+            
+            uiService.toggleLoading(elements.summaryLoading, true);
+            elements.summaryContainer.innerHTML = ""; // Clear previous summary
+            
+            try {
+                const tabUrl = await chromeService.getCurrentTabUrl();
+                const selectedStyle = elements.summaryStyleDropdown.value;
+                
+                const data = await apiService.summarizePage(tabUrl, selectedStyle);
+                uiService.displaySummary(data.summary);
+            } catch (error) {
+                uiService.displaySummary(null);
+                console.error("Error:", error);
+            } finally {
+                uiService.toggleLoading(elements.summaryLoading, false);
+            }
+        },
+        
+        async handleFetchSuggestions() {
+            if (!state.apiKey) {
+                return uiService.showAlert("Please set an API key first.");
+            }
+            
+            uiService.toggleLoading(elements.suggestionsLoading, true);
+            elements.suggestionsContainer.innerHTML = "";
+            
+            try {
+                const tabUrl = await chromeService.getCurrentTabUrl();
+                
+                if (!tabUrl) {
+                    return uiService.showAlert("Unable to retrieve the page URL.");
+                }
+                
+                const data = await apiService.getSuggestions(tabUrl);
+                uiService.displaySuggestions(data.suggestions);
+            } catch (error) {
+                uiService.showAlert("Error: No suggestions available.");
+                console.error("Error:", error);
+            } finally {
+                uiService.toggleLoading(elements.suggestionsLoading, false);
+            }
+        },
+        
+        async handleSuggestionClick(phrase) {
+            elements.relatedLinksContainer.innerHTML = "<p>Loading...</p>";
+            elements.relatedLinksSection.classList.remove("hidden");
+            
+            try {
+                const data = await apiService.fetchRelatedLinks(phrase);
+                uiService.displayRelatedLinks(data);
+            } catch (error) {
+                elements.relatedLinksContainer.innerHTML = "<p>Error fetching links.</p>";
+                console.error("Error fetching related links:", error);
+            }
+        },
+        
+        changeQuestionIndex(offset) {
+            state.currentIndex = Math.max(0, Math.min(state.currentIndex + offset, state.questions.length - 1));
+            uiService.renderQuestion();
+        }
+    };
+
+    // Initialize the application
+    await controller.init();
     console.log("✅ Logic event listeners initialized");
 });
