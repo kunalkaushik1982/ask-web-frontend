@@ -248,131 +248,122 @@ document.addEventListener("DOMContentLoaded", async () => {
         });
     });
     
-    // function displaySuggestions(response) {
-    //     // Parse the response if it's a JSON string
-    //     let data;
-    //     try {
-    //         data = typeof response === "string" ? JSON.parse(response) : response;
-    //     } catch (error) {
-    //         console.error("Invalid JSON response", error);
-    //         return;
-    //     }
-    
-    //     // Ensure the response contains phrases
-    //     if (!data.phrases || !Array.isArray(data.phrases)) {
-    //         console.error("No phrases found in response");
-    //         return;
-    //     }
-    
-    //     // Get the suggestions container
-    //     const container = document.getElementById("suggestionsContainer");
-    //     if (!container) {
-    //         console.error("Container element not found");
-    //         return;
-    //     }
-    
-    //     // Clear existing suggestions
-    //     container.innerHTML = "";
-    
-    //     // Create and append a title for the suggestions
-    //     const title = document.createElement("h3");
-    //     title.textContent = "Key Phrases";
-    //     container.appendChild(title);
-    
-    //     // Create a list for phrases
-    //     const list = document.createElement("ul");
-    //     list.classList.add("suggestions-list");
-    
-    //     // Append phrases to the list as clickable items
-    //     data.phrases.forEach(phrase => {
-    //         const listItem = document.createElement("li");
-    //         listItem.textContent = phrase;
-    //         listItem.classList.add("suggestion-item");
-    //         listItem.addEventListener("click", function () {
-    //             copyToClipboard(phrase);
-    //         });
-    //         list.appendChild(listItem);
-    //     });
-    
-    //     // Append the list to the container
-    //     container.appendChild(list);
-    // }
-    
-    // // Function to copy text to clipboard
-    // function copyToClipboard(text) {
-    //     navigator.clipboard.writeText(text)
-    //         .then(() => {
-    //             alert("Copied: " + text);
-    //         })
-    //         .catch(err => {
-    //             console.error("Failed to copy text:", err);
-    //         });
-    // }
-    
 
-async function fetchRelatedLinks(query) {
-    const relatedLinksContainer = document.getElementById("relatedLinksContainer");
-    const relatedLinksSection = document.getElementById("relatedLinksSection");
-
-    // Show loading message
-    relatedLinksContainer.innerHTML = "<p>Loading...</p>";
-    relatedLinksSection.classList.remove("hidden");
-
-    try {
-        let response = await fetch(`http://127.0.0.1:8000/fetch_related_links?query=${encodeURIComponent(query)}`);
-        let data = await response.json();
-
-        if (data.urls && data.urls.length > 0) {
-            relatedLinksContainer.innerHTML = "";
-            data.urls.forEach(url => {
-                let link = document.createElement("a");
-                link.href = url;
-                link.textContent = url;
-                link.classList.add("related-link");
-                link.target = "_blank"; // Open links in new tab
-                relatedLinksContainer.appendChild(link);
-            });
-        } else {
-            relatedLinksContainer.innerHTML = "<p>No links found.</p>";
+    // Modify suggestion display function
+    function displaySuggestions(response) {
+        let data;
+        try {
+            data = typeof response === "string" ? JSON.parse(response) : response;
+        } catch (error) {
+            console.error("Invalid JSON response", error);
+            return;
         }
-    } catch (error) {
-        relatedLinksContainer.innerHTML = "<p>Error fetching links.</p>";
-        console.error("Error fetching related links:", error);
-    }
-}
 
-// Modify suggestion display function
-function displaySuggestions(response) {
-    let data;
-    try {
-        data = typeof response === "string" ? JSON.parse(response) : response;
-    } catch (error) {
-        console.error("Invalid JSON response", error);
-        return;
+        const container = document.getElementById("suggestionsContainer");
+        if (!container) {
+            console.error("Container element not found");
+            return;
+        }
+
+        container.innerHTML = "";
+        
+        if (data.phrases && data.phrases.length > 0) {
+            const list = document.createElement("ul");
+
+            data.phrases.forEach(phrase => {
+                const listItem = document.createElement("li");
+                listItem.textContent = phrase;
+                listItem.classList.add("clickable-suggestion");
+                listItem.addEventListener("click", () => fetchRelatedLinks(phrase));
+                list.appendChild(listItem);
+            });
+
+            container.appendChild(list);
+        }
     }
 
-    const container = document.getElementById("suggestionsContainer");
-    if (!container) {
-        console.error("Container element not found");
-        return;
+    async function DemofetchRelatedLinks(query) {
+        const relatedLinksContainer = document.getElementById("relatedLinksContainer");
+        const relatedLinksSection = document.getElementById("relatedLinksSection");
+
+        // Show loading message
+        relatedLinksContainer.innerHTML = "<p>Loading...</p>";
+        relatedLinksSection.classList.remove("hidden");
+
+        try {
+            let response = await fetch(`http://127.0.0.1:8000/fetch_related_links?query=${encodeURIComponent(query)}`);
+            let data = await response.json();
+            console.log(data)
+
+            if (data.urls && data.urls.length > 0) {
+                relatedLinksContainer.innerHTML = "";
+                data.urls.forEach(url => {
+                    let link = document.createElement("a");
+                    link.href = url;
+                    link.textContent = url;
+                    link.classList.add("related-link");
+                    link.target = "_blank"; // Open links in new tab
+                    relatedLinksContainer.appendChild(link);
+                });
+            } else {
+                relatedLinksContainer.innerHTML = "<p>No links found.</p>";
+            }
+        } catch (error) {
+            relatedLinksContainer.innerHTML = "<p>Error fetching links.</p>";
+            console.error("Error fetching related links:", error);
+        }
     }
 
-    container.innerHTML = "";
+    async function fetchRelatedLinks(query) {
+        const relatedLinksContainer = document.getElementById("relatedLinksContainer");
+        const relatedLinksSection = document.getElementById("relatedLinksSection");
     
-    if (data.phrases && data.phrases.length > 0) {
-        const list = document.createElement("ul");
-
-        data.phrases.forEach(phrase => {
-            const listItem = document.createElement("li");
-            listItem.textContent = phrase;
-            listItem.classList.add("clickable-suggestion");
-            listItem.addEventListener("click", () => fetchRelatedLinks(phrase));
-            list.appendChild(listItem);
-        });
-
-        container.appendChild(list);
+        // Show loading message
+        relatedLinksContainer.innerHTML = "<p>Loading...</p>";
+        relatedLinksSection.classList.remove("hidden");
+    
+        try {
+            let response = await fetch(`http://127.0.0.1:8000/fetch_related_links?query=${encodeURIComponent(query)}`);
+            let data = await response.json();
+            
+            console.log("Fetched Data:", data, "Type:", typeof data);
+    
+            // Fix potential issues
+            if (typeof data === "string") {
+                data = JSON.parse(data);  // Convert string to object
+            }
+    
+            if (data.related_links && Array.isArray(data.related_links)) {
+                data = data.related_links;  // Extract the actual array
+            }
+    
+            if (Array.isArray(data) && data.length > 0) {
+                relatedLinksContainer.innerHTML = ""; // Clear previous results
+    
+                data.forEach(link => {
+                    let linkCard = document.createElement("div");
+                    linkCard.classList.add("related-link-card");
+    
+                    let faviconUrl = `https://www.google.com/s2/favicons?sz=64&domain=${link.hostname}`;
+    
+                    linkCard.innerHTML = `
+                        <div class="related-link-content">
+                            <img src="${faviconUrl}" alt="Favicon" class="related-link-favicon">
+                            <div class="related-link-details">
+                                <a href="${link.url}" target="_blank" class="related-link-title">${link.title}</a>
+                                <p class="related-link-hostname">${link.hostname}</p>
+                            </div>
+                        </div>
+                    `;
+                    relatedLinksContainer.appendChild(linkCard);
+                });
+            } else {
+                relatedLinksContainer.innerHTML = "<p>No links found.</p>";
+            }
+        } catch (error) {
+            relatedLinksContainer.innerHTML = "<p>Error fetching links.</p>";
+            console.error("Error fetching related links:", error);
+        }
     }
-}
-
     console.log("✅ Logic event listeners initialized");
 });
